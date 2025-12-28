@@ -27,10 +27,8 @@ A modern, beautiful web application built with React, TypeScript, and Tailwind C
 ## 📦 Installation
 
 ```bash
-# Navigate to frontend directory
-cd frontend
-
 # Install dependencies
+
 npm install
 
 # Start development server
@@ -117,6 +115,10 @@ npm run preview
 ### Worker (Elf)
 - Email: elf@workshop.com
 - Password: (any password)
+
+## 📸 Screenshots
+
+*(Please add screenshots of the application here to showcase the UI)*
 
 ## 🎄 Future Enhancements
 

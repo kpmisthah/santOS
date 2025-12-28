@@ -1,5 +1,36 @@
 import { useState, useEffect } from 'react';
-import type { DashboardStats } from '../../types';
+import {
+    Chart as ChartJS,
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    Title,
+    Tooltip,
+    Legend,
+    ArcElement
+} from 'chart.js';
+import { Bar, Doughnut } from 'react-chartjs-2';
+
+ChartJS.register(
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    Title,
+    Tooltip,
+    Legend,
+    ArcElement
+);
+
+type DashboardStats = {
+    totalChildren: number;
+    totalGifts: number;
+    pendingTasks: number;
+    completedTasks: number;
+    pendingDeliveries: number;
+    completedDeliveries: number;
+    niceChildren: number;
+    naughtyChildren: number;
+};
 
 const AdminDashboard = () => {
     const [stats, setStats] = useState<DashboardStats>({
@@ -13,20 +44,44 @@ const AdminDashboard = () => {
         naughtyChildren: 0,
     });
 
+    const [demandData, setDemandData] = useState<any>(null);
+
     useEffect(() => {
-        // Simulate API call
-        setTimeout(() => {
-            setStats({
-                totalChildren: 12450,
-                totalGifts: 24800,
-                pendingTasks: 342,
-                completedTasks: 1658,
-                pendingDeliveries: 8234,
-                completedDeliveries: 4216,
-                niceChildren: 11203,
-                naughtyChildren: 1247,
-            });
-        }, 500);
+        const fetchData = async () => {
+            try {
+                // Fetch Stats
+                const statsRes = await fetch('http://localhost:3000/api/analytics/stats');
+                if (statsRes.ok) {
+                    const data = await statsRes.json();
+                    setStats(data);
+                }
+
+                // Fetch Demand for Charts
+                const demandRes = await fetch('http://localhost:3000/api/analytics/demand');
+                if (demandRes.ok) {
+                    const data = await demandRes.json();
+
+                    // Process global demand for bar chart (Top 5)
+                    const topGifts = data.global_demand.slice(0, 5);
+                    setDemandData({
+                        labels: topGifts.map((d: any) => d.gift_name),
+                        datasets: [
+                            {
+                                label: 'Requested Qty',
+                                data: topGifts.map((d: any) => d.count),
+                                backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                            }
+                        ]
+                    });
+                }
+            } catch (error) {
+                console.error("Failed to fetch dashboard data", error);
+            }
+        };
+
+        fetchData();
+        const interval = setInterval(fetchData, 30000); // Poll every 30s
+        return () => clearInterval(interval);
     }, []);
 
     const statCards = [
@@ -148,65 +203,75 @@ const AdminDashboard = () => {
             {/* Charts and Activity Section */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Task Progress */}
+                {/* Task Progress & Analytics */}
                 <div className="lg:col-span-2 glass-card p-8">
                     <h2 className="text-2xl font-display font-bold mb-8 text-frost-100 flex items-center gap-3">
-                        <span className="text-stardust-400">📊</span> Task Progress
+                        <span className="text-stardust-400">📊</span> Analytics & Demand
                     </h2>
-                    <div className="space-y-8">
-                        <div>
-                            <div className="flex justify-between mb-3 text-sm">
-                                <span className="text-frost-200/80 font-medium">Overall Completion</span>
-                                <span className="font-bold text-stardust-400">
-                                    {Math.round((stats.completedTasks / (stats.completedTasks + stats.pendingTasks)) * 100)}%
-                                </span>
-                            </div>
-                            <div className="h-4 bg-north-pole-900 rounded-full overflow-hidden border border-white/5 shadow-inner">
-                                <div
-                                    className="h-full bg-gradient-to-r from-evergreen-600 to-evergreen-400 relative overflow-hidden"
-                                    style={{ width: `${(stats.completedTasks / (stats.completedTasks + stats.pendingTasks)) * 100}%` }}
-                                >
-                                    <div className="absolute inset-0 bg-shimmer animate-shimmer opacity-30"></div>
-                                </div>
-                            </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {/* Top Toys Demand Chart */}
+                        <div className="bg-north-pole-900/40 p-4 rounded-xl border border-white/5">
+                            <h3 className="text-frost-200 mb-4 font-semibold">Top Requested Toys</h3>
+                            {demandData ? (
+                                <Bar
+                                    data={demandData}
+                                    options={{
+                                        responsive: true,
+                                        plugins: {
+                                            legend: { display: false },
+                                            title: { display: false }
+                                        },
+                                        scales: {
+                                            y: { beginAtZero: true, ticks: { color: '#9CA3AF' } },
+                                            x: { ticks: { color: '#9CA3AF' } }
+                                        }
+                                    }}
+                                />
+                            ) : (
+                                <p className="text-frost-200/50 text-sm">Loading demand data...</p>
+                            )}
                         </div>
 
-                        <div>
-                            <div className="flex justify-between mb-3 text-sm">
-                                <span className="text-frost-200/80 font-medium">Delivery Progress</span>
-                                <span className="font-bold text-festive-red-400">
-                                    {Math.round((stats.completedDeliveries / (stats.completedDeliveries + stats.pendingDeliveries)) * 100)}%
-                                </span>
+                        {/* Nice vs Naughty Ratio */}
+                        <div className="bg-north-pole-900/40 p-4 rounded-xl border border-white/5 flex flex-col items-center">
+                            <h3 className="text-frost-200 mb-4 font-semibold">Nice vs Naughty List</h3>
+                            <div className="w-48 h-48">
+                                <Doughnut
+                                    data={{
+                                        labels: ['Nice', 'Naughty'],
+                                        datasets: [
+                                            {
+                                                data: [stats.niceChildren, stats.naughtyChildren],
+                                                backgroundColor: [
+                                                    'rgba(16, 185, 129, 0.7)', // Evergreen
+                                                    'rgba(239, 68, 68, 0.7)',  // Red
+                                                ],
+                                                borderColor: [
+                                                    'rgba(16, 185, 129, 1)',
+                                                    'rgba(239, 68, 68, 1)',
+                                                ],
+                                                borderWidth: 1,
+                                            },
+                                        ],
+                                    }}
+                                    options={{
+                                        responsive: true,
+                                        plugins: { legend: { position: 'bottom', labels: { color: '#D1D5DB' } } }
+                                    }}
+                                />
                             </div>
-                            <div className="h-4 bg-north-pole-900 rounded-full overflow-hidden border border-white/5 shadow-inner">
-                                <div
-                                    className="h-full bg-gradient-to-r from-festive-red-700 to-festive-red-500 relative overflow-hidden"
-                                    style={{ width: `${(stats.completedDeliveries / (stats.completedDeliveries + stats.pendingDeliveries)) * 100}%` }}
-                                >
-                                    <div className="absolute inset-0 bg-shimmer animate-shimmer opacity-30"></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div>
-                            <div className="flex justify-between mb-3 text-sm">
-                                <span className="text-frost-200/80 font-medium">Nice vs Naughty Ratio</span>
-                                <span className="font-bold text-evergreen-400">
-                                    {Math.round((stats.niceChildren / stats.totalChildren) * 100)}% Nice
-                                </span>
-                            </div>
-                            <div className="h-4 bg-north-pole-900 rounded-full overflow-hidden border border-white/5 shadow-inner">
-                                <div
-                                    className="h-full bg-gradient-to-r from-evergreen-600 to-evergreen-500 relative overflow-hidden"
-                                    style={{ width: `${(stats.niceChildren / stats.totalChildren) * 100}%` }}
-                                >
-                                    <div className="absolute inset-0 bg-shimmer animate-shimmer opacity-30"></div>
-                                </div>
+                            <div className="mt-4 text-center">
+                                <span className="text-2xl font-bold text-evergreen-400">{stats.niceChildren}</span>
+                                <span className="text-frost-200/50 mx-2">vs</span>
+                                <span className="text-2xl font-bold text-festive-red-400">{stats.naughtyChildren}</span>
                             </div>
                         </div>
                     </div>
 
-                    {/* Quick Stats */}
-                    <div className="grid grid-cols-2 gap-6 mt-10">
+                    {/* Quick Stats Summary */}
+                    <div className="grid grid-cols-2 gap-6 mt-8">
+                        {/* ... (Existing Quick Stats logic preserved but updated if needed) ... */}
                         <div className="bg-north-pole-900/50 border border-white/5 rounded-2xl p-6 flex flex-col items-center justify-center text-center group hover:border-stardust-400/30 transition-colors">
                             <div className="text-3xl mb-3 group-hover:scale-110 transition-transform duration-300">⏱️</div>
                             <div className="text-3xl font-display font-bold text-frost-100 mb-1">{stats.pendingTasks}</div>

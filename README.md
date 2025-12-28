@@ -5,7 +5,8 @@ A modern, beautiful web application built with React, TypeScript, and Tailwind C
 ## ✨ Features
 
 ### 🎅 Admin (Santa) Features
-- **Dashboard Overview**: Real-time statistics and metrics
+- **Dashboard Overview**: Real-time statistics, metrics, and visual analytics
+- **Analytics Charts**: Visual insights on Gift Demand and Behavior (Nice/Naughty) using interactive charts
 - **Children & Wishlists Management**: View and manage children's information and gift requests
 - **Task Assignment**: Assign gift production tasks to elves
 - **Delivery Tracking**: Monitor deliveries across all regions worldwide
@@ -20,6 +21,7 @@ A modern, beautiful web application built with React, TypeScript, and Tailwind C
 
 - **Frontend**: React 18 + TypeScript
 - **Styling**: Tailwind CSS
+- **Visualization**: Chart.js + react-chartjs-2
 - **Routing**: React Router v6
 - **Build Tool**: Vite
 - **Icons**: Emoji-based (no external dependencies)
@@ -28,7 +30,6 @@ A modern, beautiful web application built with React, TypeScript, and Tailwind C
 
 ```bash
 # Install dependencies
-
 npm install
 
 # Start development server
@@ -49,7 +50,7 @@ npm run dev
 - `/` - Login page with role selection (Santa/Elf)
 
 ### Admin Routes
-- `/admin/dashboard` - Admin dashboard with statistics
+- `/admin/dashboard` - Admin dashboard with statistics and charts
 - `/admin/children` - Children and wishlists management
 - `/admin/tasks` - Task assignment and management
 - `/admin/deliveries` - Delivery tracking
@@ -122,12 +123,12 @@ npm run preview
 
 ## 🎄 Future Enhancements
 
-- Backend API integration with Node.js
-- Real-time updates with WebSockets
-- Advanced analytics and reporting
-- Email notifications
-- Mobile app version
-- Multi-language support
+- [x] Backend API integration with Node.js
+- [x] Advanced analytics and reporting
+- [ ] Real-time updates with WebSockets
+- [ ] Email notifications
+- [ ] Mobile app version
+- [ ] Multi-language support
 
 ## 👨‍💻 Author
 

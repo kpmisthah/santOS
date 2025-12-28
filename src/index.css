@@ -1,0 +1,77 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Outfit:wght@200;300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-north-pole-950 text-frost-100 antialiased font-sans overflow-x-hidden;
+    background-image: radial-gradient(circle at 50% 0%, #172033 0%, #020617 75%);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-display tracking-wide;
+  }
+}
+
+@layer utilities {
+
+  /* Glassmorphism */
+  .glass-panel {
+    @apply bg-north-pole-800/40 backdrop-blur-xl border border-frost-200/10 shadow-glass;
+  }
+
+  .glass-card {
+    @apply bg-card-gloss backdrop-blur-md border border-frost-200/5 shadow-glass-sm rounded-2xl transition-all duration-300;
+  }
+
+  .glass-input {
+    @apply bg-north-pole-900/60 border border-frost-200/10 text-frost-100 placeholder-north-pole-600 focus:border-stardust-400/50 focus:ring-1 focus:ring-stardust-400/50 outline-none transition-all duration-300 backdrop-blur-sm;
+  }
+
+  /* Text Gradients */
+  .text-gradient-gold {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-stardust-300 via-stardust-400 to-stardust-600;
+  }
+
+  .text-gradient-red {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-festive-red-glow via-festive-red-500 to-festive-red-700;
+  }
+
+  /* Buttons */
+  .btn-primary {
+    @apply relative overflow-hidden bg-gradient-to-r from-festive-red-600 to-festive-red-700 text-white font-semibold py-3 px-6 rounded-xl shadow-neon-red hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-300;
+  }
+
+  .btn-secondary {
+    @apply relative overflow-hidden bg-north-pole-800 border border-frost-200/10 text-frost-200 font-medium py-3 px-6 rounded-xl hover:bg-north-pole-700 hover:text-white transition-all duration-300;
+  }
+
+  .btn-gold {
+    @apply relative overflow-hidden bg-gradient-to-r from-stardust-500 to-stardust-600 text-north-pole-950 font-bold py-3 px-6 rounded-xl shadow-neon-gold hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-300;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-north-pole-700 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-north-pole-600;
+}

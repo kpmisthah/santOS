@@ -11,6 +11,7 @@ interface DeliveryStatus {
 const TrackGift = () => {
     const [trackingCode, setTrackingCode] = useState('');
     const [searchPerformed, setSearchPerformed] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
     const [deliveryInfo, setDeliveryInfo] = useState<{
         childName: string;
         status: DeliveryStatus[];
@@ -18,45 +19,95 @@ const TrackGift = () => {
         currentStatus: 'preparing' | 'in_transit' | 'out_for_delivery' | 'delivered';
     } | null>(null);
 
-    const handleSearch = (e: FormEvent) => {
+    const handleSearch = async (e: FormEvent) => {
         e.preventDefault();
         setSearchPerformed(true);
+        setIsLoading(true);
+        setDeliveryInfo(null);
 
-        // Mock data - in production, this would fetch from backend
-        if (trackingCode.startsWith('SANTA-')) {
+        try {
+            // Extract the actual tracking ID from the code (remove SANTA- prefix)
+            const trackingId = trackingCode.replace('SANTA-', '').toLowerCase();
+
+            const response = await fetch(`http://localhost:3000/api/deliveries/track/${trackingId}`);
+
+            if (!response.ok) {
+                throw new Error('Tracking code not found');
+            }
+
+            const data = await response.json();
+
+            // Map backend status to frontend status
+            let currentStatus: 'preparing' | 'in_transit' | 'out_for_delivery' | 'delivered' = 'preparing';
+            if (data.status === 'in_transit' || data.status === 'in-transit') {
+                currentStatus = 'in_transit';
+            } else if (data.status === 'delivered') {
+                currentStatus = 'delivered';
+            }
+
+            // Create timeline based on status
+            const timeline: DeliveryStatus[] = [
+                {
+                    status: 'preparing',
+                    location: 'North Pole Workshop',
+                    timestamp: new Date(data.createdAt).toLocaleString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit'
+                    }),
+                    message: 'Elves are carefully preparing your gifts! 🧝'
+                }
+            ];
+
+            if (currentStatus === 'in_transit' || currentStatus === 'delivered') {
+                timeline.push({
+                    status: 'in_transit',
+                    location: `Santa's Sleigh - ${data.region}`,
+                    timestamp: new Date(data.updatedAt).toLocaleString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit'
+                    }),
+                    message: 'On the way! Rudolph is leading the team! 🦌'
+                });
+            }
+
+            if (currentStatus === 'delivered') {
+                timeline.push({
+                    status: 'delivered',
+                    location: data.region,
+                    timestamp: new Date(data.deliveryDate || data.updatedAt).toLocaleString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit'
+                    }),
+                    message: 'Delivered! Merry Christmas! 🎄'
+                });
+            }
+
             setDeliveryInfo({
-                childName: 'Emma',
-                currentStatus: 'in_transit',
-                estimatedDelivery: 'December 25, 2024',
-                status: [
-                    {
-                        status: 'preparing',
-                        location: 'North Pole Workshop',
-                        timestamp: 'Dec 15, 2024 - 10:00 AM',
-                        message: 'Elves are carefully preparing your gifts! 🧝'
-                    },
-                    {
-                        status: 'preparing',
-                        location: 'North Pole Workshop',
-                        timestamp: 'Dec 18, 2024 - 2:30 PM',
-                        message: 'Gifts wrapped and ready for delivery! 🎁'
-                    },
-                    {
-                        status: 'in_transit',
-                        location: 'Santa\'s Sleigh - Over Greenland',
-                        timestamp: 'Dec 20, 2024 - 8:00 PM',
-                        message: 'On the way! Rudolph is leading the team! 🦌'
-                    },
-                    {
-                        status: 'in_transit',
-                        location: 'Distribution Center - Iceland',
-                        timestamp: 'Dec 22, 2024 - 11:45 AM',
-                        message: 'Making a quick stop to refuel the sleigh! ⛽'
-                    }
-                ]
+                childName: 'Friend', // We don't expose child name for privacy
+                currentStatus,
+                estimatedDelivery: data.deliveryDate
+                    ? new Date(data.deliveryDate).toLocaleDateString('en-US', {
+                        month: 'long',
+                        day: 'numeric',
+                        year: 'numeric'
+                    })
+                    : 'December 25, 2025',
+                status: timeline
             });
-        } else {
+        } catch (error) {
+            console.error('Tracking error:', error);
             setDeliveryInfo(null);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -132,9 +183,10 @@ const TrackGift = () => {
                             />
                             <button
                                 type="submit"
-                                className="btn-primary px-8 py-4 text-lg shadow-neon-gold hover:scale-105 transform transition-all duration-300"
+                                disabled={isLoading}
+                                className={`btn-primary px-8 py-4 text-lg shadow-neon-gold hover:scale-105 transform transition-all duration-300 ${isLoading ? 'opacity-75 cursor-wait' : ''}`}
                             >
-                                🔍 Track
+                                {isLoading ? '🔄 Tracking...' : '🔍 Track'}
                             </button>
                         </div>
                         <p className="text-frost-200/40 text-xs mt-4 font-light">
